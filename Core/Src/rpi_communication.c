@@ -17,44 +17,29 @@ int write_data_to_pi(
 {
 	*bw = 0;
 
-	//Send message start header:
-	uint8_t header_len = 4;
-	uint8_t header[] = {0xFA,0x05,0xFA,0x05};
-	uint8_t header_recv_buf[header_len];
+	uint8_t header[] = {0xFA, 0x05, 0xFA, 0x05};
+	uint8_t footer[] = {0xFB, 0x06, 0xFB, 0x06, 0x00};
+	uint8_t header_len = sizeof(header);
+	uint8_t footer_len = sizeof(footer);
+
+	uint32_t total_len = header_len + btw + footer_len;
+	uint8_t tx_buf[total_len];
+	uint8_t rx_buf[total_len];
+
+	memcpy(tx_buf, header, header_len);
+	memcpy(tx_buf + header_len, buff, btw);
+	memcpy(tx_buf + header_len + btw, footer, footer_len);
 
 	HAL_GPIO_WritePin(WRITE_PIN_GPIO_Port, WRITE_PIN_Pin, GPIO_PIN_SET);
-	if(HAL_SPI_TransmitReceive(hspi, header, header_recv_buf, header_len, HAL_MAX_DELAY) != HAL_OK){
-		//unable to send header
+
+	if (HAL_SPI_TransmitReceive(hspi, tx_buf, rx_buf, total_len, HAL_MAX_DELAY) != HAL_OK) {
 		HAL_GPIO_WritePin(WRITE_PIN_GPIO_Port, WRITE_PIN_Pin, GPIO_PIN_RESET);
 		return 0;
 	}
-	HAL_GPIO_WritePin(WRITE_PIN_GPIO_Port, WRITE_PIN_Pin, GPIO_PIN_RESET);
-	//header sent
 
-	uint8_t recv_buf[btw];
-	HAL_GPIO_WritePin(WRITE_PIN_GPIO_Port, WRITE_PIN_Pin, GPIO_PIN_SET);
-	if (HAL_SPI_TransmitReceive(hspi, buff, recv_buf, btw, HAL_MAX_DELAY) != HAL_OK){
-		//unable to send data
-		HAL_GPIO_WritePin(WRITE_PIN_GPIO_Port, WRITE_PIN_Pin, GPIO_PIN_RESET);
-		return 0;
-	}
 	HAL_GPIO_WritePin(WRITE_PIN_GPIO_Port, WRITE_PIN_Pin, GPIO_PIN_RESET);
-	//data sent
 
 	*bw = btw;
-
-	//Send message end footer:
-	uint8_t footer_len = 5;
-	uint8_t footer[] = {0xFB,0x06,0xFB,0x06,0x00};
-	uint8_t footer_recv_buf[footer_len];
-	HAL_GPIO_WritePin(WRITE_PIN_GPIO_Port, WRITE_PIN_Pin, GPIO_PIN_SET);
-	if(HAL_SPI_TransmitReceive(hspi, footer, footer_recv_buf, footer_len, HAL_MAX_DELAY) != HAL_OK){
-		//unable to send footer
-		HAL_GPIO_WritePin(WRITE_PIN_GPIO_Port, WRITE_PIN_Pin, GPIO_PIN_RESET);
-		return 0;
-	}
-	HAL_GPIO_WritePin(WRITE_PIN_GPIO_Port, WRITE_PIN_Pin, GPIO_PIN_RESET);
-	//footer sent
 
 	return 1;
 }
