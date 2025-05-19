@@ -1,3 +1,0 @@
-../Core/Src/rpi_communication.c:11:5:write_data_to_pi	4
-../Core/Src/rpi_communication.c:63:5:write_file_length_to_pi	1
-../Core/Src/rpi_communication.c:73:5:create_wave_file	3
